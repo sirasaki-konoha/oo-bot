@@ -7,8 +7,8 @@ use serenity::{
 };
 use tracing::{error, info};
 
-mod oo;
 mod atsumori;
+mod oo;
 
 const STAMP: &str = "<:Omilfy:1489695886773587978>";
 const EMOJI_ID: u64 = 1489695886773587978;
@@ -16,7 +16,6 @@ const EMOJI_NAME: &str = "Omilfy";
 const ERROR_MSG_PROBABILITY: f64 = 0.2;
 
 struct Handler;
-
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -31,7 +30,6 @@ impl EventHandler for Handler {
         if count == 0 {
             return;
         }
-
 
         // 20%の確率でエラー風メッセージを送る
         if rand::thread_rng().gen_bool(ERROR_MSG_PROBABILITY) {

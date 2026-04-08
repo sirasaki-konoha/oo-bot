@@ -1,8 +1,5 @@
 use tracing::info;
 
-
-
-
 /// 「おお」「オオ」「oo」（大文字小文字問わず）が何個あるか数える
 pub fn count_oo(s: &str) -> usize {
     let mut count = 0;
@@ -53,8 +50,10 @@ pub fn build_error_msg(content: &str) -> String {
     let col = find_oo_col(content);
     let spaces = " ".repeat(col);
     let suggestion = suggest(content);
-    info!("「おお」が見つかりました: col={}, content=\"{}\", suggestion=\"{}\"", col, content, suggestion);
-
+    info!(
+        "「おお」が見つかりました: col={}, content=\"{}\", suggestion=\"{}\"",
+        col, content, suggestion
+    );
 
     format!(
         "```\nError: Unexpected 「おお」\n1 | {content}\n  | {spaces}^^\n  Note: \"{content}\" includes 「おお」. use \"{suggestion}\"\n```"

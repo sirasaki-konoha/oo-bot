@@ -1,7 +1,6 @@
 use serenity::{all::Context, model::prelude::*};
 use tracing::{error, info};
 
-
 pub async fn handle_atsumori(ctx: &Context, msg: &Message) {
     if msg.content.contains("熱盛") {
         // <:atsumori:1484023233220186132>
