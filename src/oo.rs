@@ -1,27 +1,10 @@
 use tracing::info;
 
-/// 「おお」「オオ」「oo」（大文字小文字問わず）が何個あるか数える
-pub fn count_oo(s: &str) -> usize {
-    let mut count = 0;
-    let chars: Vec<char> = s.chars().collect();
-    let mut i = 0;
-    while i + 1 < chars.len() {
-        let (a, b) = (chars[i], chars[i + 1]);
-        if is_oo(a, b) {
-            count += 1;
-            i += 2;
-        } else {
-            i += 1;
-        }
-    }
-    count
-}
-
 /// 2文字が「おお」系かどうか判定
 pub fn is_oo(a: char, b: char) -> bool {
     (a == 'お' && b == 'お')
         || (a == 'オ' && b == 'オ')
-        || (a.to_ascii_lowercase() == 'o' && b.to_ascii_lowercase() == 'o')
+        || (a.eq_ignore_ascii_case(&'o') && b.eq_ignore_ascii_case(&'o'))
 }
 
 /// 「おお」が最初に出てくる文字インデックスを返す

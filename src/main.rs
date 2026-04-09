@@ -1,3 +1,8 @@
+use std::sync::Arc;
+
+use lindera::{
+    dictionary::load_dictionary, mode::Mode, segmenter::Segmenter, tokenizer::Tokenizer,
+};
 use rand::Rng;
 use serenity::{
     all::{EmojiId, ReactionType},
@@ -9,13 +14,16 @@ use tracing::{error, info};
 
 mod atsumori;
 mod oo;
+mod reply;
 
 const STAMP: &str = "<:Omilfy:1489695886773587978>";
 const EMOJI_ID: u64 = 1489695886773587978;
 const EMOJI_NAME: &str = "Omilfy";
 const ERROR_MSG_PROBABILITY: f64 = 0.2;
 
-struct Handler;
+struct Handler {
+    tokenizer: Arc<Mutex<Tokenizer>>,
+}
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -24,9 +32,29 @@ impl EventHandler for Handler {
             return;
         }
 
-        atsumori::handle_atsumori(&ctx, &msg).await;
+        if msg.mentions_me(&ctx).await.unwrap_or_default() {
+            reply::handle_reply(&ctx, &msg).await;
+            return;
+        }
 
-        let count = oo::count_oo(&msg.content);
+        atsumori::handle_atsumori(&ctx, &msg).await;
+        let count = {
+            let tokenizer = self.tokenizer.lock().await;
+            let mut tokens = tokenizer.tokenize(&msg.content).unwrap_or_default();
+            let mut count = 0;
+            for token in tokens.iter_mut() {
+                if token
+                    .details()
+                    .get(7)
+                    .map(|r| r.contains("オオ"))
+                    .unwrap_or(false)
+                {
+                    count += 1;
+                }
+            }
+            count
+        };
+
         if count == 0 {
             return;
         }
@@ -41,6 +69,13 @@ impl EventHandler for Handler {
         }
 
         if count == 1 {
+            if msg.content.contains("これはおお") {
+                if let Err(e) = msg.channel_id.say(&ctx.http, STAMP).await {
+                    error!("メッセージ送信エラー: {:?}", e);
+                }
+                return;
+            }
+
             // 1個ならリアクション
             let emoji = ReactionType::Custom {
                 animated: false,
@@ -70,13 +105,18 @@ async fn main() {
 
     dotenvy::dotenv().ok();
     let token = std::env::var("DISCORD_TOKEN").expect("DISCORD_TOKEN が .env に設定されていません");
+    let dictionary = load_dictionary("embedded://ipadic").unwrap();
+    let segmenter = Segmenter::new(Mode::Normal, dictionary, None);
+    let tokenizer = Tokenizer::new(segmenter);
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
     let mut client = Client::builder(&token, intents)
-        .event_handler(Handler)
+        .event_handler(Handler {
+            tokenizer: Arc::new(Mutex::new(tokenizer)),
+        })
         .await
         .expect("クライアントの作成に失敗しました");
 

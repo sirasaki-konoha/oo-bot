@@ -15,6 +15,5 @@ pub async fn handle_atsumori(ctx: &Context, msg: &Message) {
         }
 
         info!("「熱盛」が見つかりました: content=\"{}\"", msg.content);
-        return;
     }
 }
